@@ -19,3 +19,7 @@ thus unable to determine who refreshed the abnormality.
 ## Changelog
 ### 1.1.0
 * [+] Added C_ABNORMALITY_REFRESH to notify that someone has refreshed an abnormality.
+
+
+![Screenshot](http://i.imgur.com/txZzgvL.jpg)
+
