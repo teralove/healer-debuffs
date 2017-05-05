@@ -10,7 +10,7 @@ Messages are only sent to yourself by default.
 
 
 ## Known Issues
-* Unable to determine who overwrote or refreshed an abnormality. The problem is the server sends "C_ABNORMALITY_REFRESH" instead of "C_ABNORMALITY_START", thing is it doesn't say who did the refreshing. 
+* Unable to determine who overwrote or refreshed an abnormality. The problem is the server sends "C_ABNORMALITY_REFRESH" instead of "C_ABNORMALITY_BEGIN", thing is it doesn't say who did the refreshing. 
 * Sometimes a misleading notification is sent, such as a Lancer or Priest applying contagion, or another healer applying hurricane when they actually didn't.
 
 
