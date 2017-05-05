@@ -1,6 +1,6 @@
 # Healer Debuffs
 
-Sends notifications to yourself or the party when an abnormality has been applied.
+Sends notifications to yourself or the party when an abnormality (Contagion or Hurricane) has been applied.
 Messages are only sent to yourself by default.
 
 
