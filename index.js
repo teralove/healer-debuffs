@@ -1,11 +1,13 @@
-// vers 1.1
+// vers 1.2
 const MESSAGE_SENDER_NAME = 'Healer Debuffs',
 ABNORMALITY_CONTAGION = 701700,
 ABNORMALITY_HURRICANE = 60010
 
 let SEND_TO_PARTY = false,		// false = send to yourself only, true = send to everyone in party
 MESSAGE_CHANNEL = 1,			// party = 1, p-notice = 21, raid = 32, r-notice = 25
-SEND_MESSAGES = true
+SEND_NOTIFICATION = true
+
+const format = require('./format.js');
 
 module.exports = function HealerDebuffs(dispatch) {
 	let	partyMembers = null
@@ -22,7 +24,7 @@ module.exports = function HealerDebuffs(dispatch) {
 		{	
 			for (var i in partyMembers.members)
 			{				
-				if (partyMembers.members[i].cID - event.source == 0)
+				if (partyMembers.members[i].cID - event.source == 0)  // !NOTE: This can't be right, should to try something different
 				{
 					var memberName = partyMembers.members[i].name
 					var durationSeconds = (event.duration * 0.001)
@@ -30,10 +32,10 @@ module.exports = function HealerDebuffs(dispatch) {
 					switch (event.id) 
 					{
 						case ABNORMALITY_CONTAGION:
-							sendChatMessage(memberName + ' - Contagion (' + durationSeconds + 's)')
+							sendNotification(memberName + ' - Contagion (' + durationSeconds + 's)')
 							break;
 						case ABNORMALITY_HURRICANE:
-							sendChatMessage(memberName + ' - Hurricane (' + durationSeconds + 's)')
+							sendNotification(memberName + ' - Hurricane (' + durationSeconds + 's)')
 							break;
 					}
 				}
@@ -41,7 +43,7 @@ module.exports = function HealerDebuffs(dispatch) {
 		}
 	})
   
-	/*Protocal version 1 is missing source datatype, unable to determine who casted the skill...*/
+	/*Definition is missing source datatype, unable to determine who casted the skill...*/
     dispatch.hook('sAbnormalityRefresh', 1, (event) => {
 
 		if (partyMembers == null) return
@@ -54,80 +56,81 @@ module.exports = function HealerDebuffs(dispatch) {
 			switch (event.id) 
 			{
 				case ABNORMALITY_CONTAGION:
-					sendChatMessage(memberName + ' - Contagion (' + durationSeconds + 's)')
+					sendNotification(memberName + ' - Contagion (' + durationSeconds + 's)')
 					break;
 				case ABNORMALITY_HURRICANE:
-					sendChatMessage(memberName + ' - Hurricane (' + durationSeconds + 's)')
+					sendNotification(memberName + ' - Hurricane (' + durationSeconds + 's)')
 					break;
 			}
 		}
 	})
   
-  dispatch.hook('cChat', (event) => {	  
-    if (/^<FONT>.hd.party<\/FONT>$/i.test(event.message)) {		
-      if (SEND_TO_PARTY) {
-        SEND_TO_PARTY = false
-        dispatch.toClient('sChat', {
-          channel: 2,
-          authorID: { high: 0, low: 0 },
-          unk1: 0,
-          gm: 1,
-          unk2: 0,
-		  authorName: MESSAGE_SENDER_NAME,
-          message: '<FONT>Messages are now only visible for you.</FONT>'
-        })
-      } else {
-        SEND_TO_PARTY = true
-        dispatch.toClient('sChat', {
-          channel: 2,
-          authorID: { high: 0, low: 0 },
-          unk1: 0,
-          gm: 1,
-          unk2: 0,
-		  authorName: MESSAGE_SENDER_NAME,
-          message: '<FONT>Messages are now sent to your party.</FONT>'
-        })
-      }
-      return false
-    }
-	else if (/^<FONT>.hd<\/FONT>$/i.test(event.message)) {	
-		SEND_MESSAGES = !SEND_MESSAGES
+  dispatch.hook('cChat', (event) => {
+	let command = format.stripTags(event.message).split(' ');
 		
-		var sendMessageStatus = null
-		if (SEND_MESSAGES) sendMessageStatus = 'enabled' 
-		else sendMessageStatus = 'disabled'
-			
-		dispatch.toClient('sChat', {
-          channel: 2,
-          authorID: { high: 0, low: 0 },
-          unk1: 0,
-          gm: 1,
-          unk2: 0,
-		  authorName: MESSAGE_SENDER_NAME,
-          message: '<FONT>Messages have been ' + sendMessageStatus + '</FONT>'
-        })
-		return false
+    if (command[0].toLowerCase() === '!hd.party') {
+		toggleSendingMessagesToParty();
+		return false;
+    }
+	else if (command[0].toLowerCase() === '!hd') {
+		toggleNotificationsOnOff();
+		return false;
 	}
   })
   
-  function sendChatMessage(message) { 
-	if (SEND_MESSAGES == false) return
+	function toggleSendingMessagesToParty() {
+		SEND_TO_PARTY = !SEND_TO_PARTY;
+		
+		if (SEND_TO_PARTY) systemMsg('<FONT>Messages are now sent to your party.</FONT>');
+		else systemMsg('<FONT>Messages are now only visible for you.</FONT>');
+	}
+  
+	function toggleNotificationsOnOff() {
+		SEND_NOTIFICATION = !SEND_NOTIFICATION
+		systemMsg('<FONT>Messages are now ' + (SEND_NOTIFICATION ? 'enabled' : 'disabled') + '</FONT>')
+	}
+  
+	function systemMsg(message) {
+		dispatch.toClient('sChat', {
+          channel: 24,
+          authorID: { high: 0, low: 0 },
+          unk1: 0,
+          gm: 0,
+          unk2: 0,
+		  authorName: '',
+          message: ' {' + MESSAGE_SENDER_NAME + '} ' + message
+        })
+	}
+  
+  function sendNotification(message) { 
+	if (SEND_NOTIFICATION == false) return
   
     if (SEND_TO_PARTY) {
       dispatch.toServer('cChat', {
         channel: MESSAGE_CHANNEL,
-        message: '<FONT>' + message + '</FONT>'
+        message: message
       })
     } else {
       dispatch.toClient('sChat', {
         channel: MESSAGE_CHANNEL,
         authorID: { high: 0, low: 0 },
         unk1: 0,
-        gm: 1,
+        gm: 0,
         unk2: 0,
         authorName: MESSAGE_SENDER_NAME,
-        message: '<FONT>' + message + '</FONT>'
+        message: message
       })
     }
   }
+  
+	// slash support, thanks to wuaw for snippet
+	try {
+		const Slash = require('slash')
+		const slash = new Slash(dispatch)
+		slash.on('hd', args => toggleNotificationsOnOff())
+		slash.on('hd.party', args => toggleSendingMessagesToParty())
+	} catch (e) {
+		// do nothing because slash is optional
+	}
+  
 }
