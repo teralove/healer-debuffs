@@ -1,7 +1,7 @@
 # Healer Debuffs
 
-Sends notifications to user or party when an abnormality has been applied.
-Messages are only sent to yourself by default, see chat commands. Or in index.js set SEND_TO_PARTY to true.
+Sends notifications to yourself or the party when an abnormality has been applied.
+Messages are only sent to yourself by default.
 
 
 ## Chat Commands
@@ -9,10 +9,9 @@ Messages are only sent to yourself by default, see chat commands. Or in index.js
 * Typing "!hd.party" will toggle sending messages to yourself or everyone in party.
 
 
-## Known Bugs
-* No notification is sent if an abnormality overwrites another matching abnormality. Notifications are only sent if the target didn't have the abnormality currently applied.
-The problem happens when abnormality is refreshed rather than starting, the server sends "C_ABNORMALITY_REFRESH", thing is it's unable to determine who refreshed the abnormality. 
-* Sometimes a misleading notification is sent, such as a Priest applying contagion, or another healer applying hurricane when they actually didn't.
+## Known Issues
+* Unable to determine who overwrote or refreshed an abnormality. The problem is the server sends "C_ABNORMALITY_REFRESH" instead of "C_ABNORMALITY_START", thing is it doesn't say who did the refreshing. 
+* Sometimes a misleading notification is sent, such as a Lancer or Priest applying contagion, or another healer applying hurricane when they actually didn't.
 
 
 ## Changelog
